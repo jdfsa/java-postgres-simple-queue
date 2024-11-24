@@ -1,4 +1,4 @@
-package com.jdfs.problem_solving.db_queue;
+package com.jdfs.problem_solving.db_queue.consumer;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -12,7 +12,7 @@ import lombok.ToString;
 @ToString
 @Entity
 @Table(name = "queue")
-class QueueItem {
+class ConsumerQueueItem {
 
     @Id
     private Integer id;

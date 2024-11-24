@@ -1,9 +1,9 @@
-package com.jdfs.problem_solving.db_queue;
+package com.jdfs.problem_solving.db_queue.consumer;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-interface QueueRepository extends CrudRepository<QueueItem, Integer> {
+interface ConsumerQueueRepository extends CrudRepository<ConsumerQueueItem, Integer> {
     @Query(value = """
             delete from queue
             where id in (
@@ -15,5 +15,5 @@ interface QueueRepository extends CrudRepository<QueueItem, Integer> {
             )
             returning *
             """, nativeQuery = true)
-    Iterable<QueueItem> readQueue(Integer limit);
+    Iterable<ConsumerQueueItem> readQueue(Integer limit);
 }
