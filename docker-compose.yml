@@ -13,6 +13,42 @@ services:
     ports:
       - 5432:5432
 
+  consumer:
+    container_name: consumer
+    restart: unless-stopped
+    build:
+      #context: ./
+      dockerfile: ./Dockerfile
+    env_file:
+      - ./db/settings.env
+    environment:
+      SPRING_PROFILES_ACTIVE: consumer
+      SPRING_APPLICATION_NAME: consumer-app
+      DB_HOST: db
+      DB_PORT: 5432
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+
+  producer:
+    container_name: producer
+    restart: unless-stopped
+    build:
+      #context: ./
+      dockerfile: ./Dockerfile
+    env_file:
+      - ./db/settings.env
+    environment:
+      SPRING_PROFILES_ACTIVE: producer
+      SPRING_APPLICATION_NAME: producer-app
+      DB_HOST: db
+      DB_PORT: 5432
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+
 volumes:
   pg-data:
     name: postgres-container_pgdata
