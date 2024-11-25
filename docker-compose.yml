@@ -1,5 +1,41 @@
 services:
   
+  localstack:
+    container_name: localstack
+    image: localstack/localstack
+    ports:
+      - "4566:4566" # LocalStack Gateway
+      - "4510-4559:4510-4559" # external services port range
+      - "53:53" # DNS config (only required for Pro)
+      - "53:53/udp" # DNS config (only required for Pro)
+      - "443:443" # LocalStack HTTPS Gateway (only required for Pro)
+    environment:
+      - DEBUG=${DEBUG-}
+      - PERSISTENCE=${PERSISTENCE-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - SERVICES=sqs
+    volumes:
+      - ./volume:/var/lib/localstack
+    networks:
+      - modulith_app_network
+
+  setup-localstack-resources:
+    image: mesosphere/aws-cli
+    environment:
+      - AWS_ACCESS_KEY_ID=dummyaccess
+      - AWS_SECRET_ACCESS_KEY=dummysecret
+      - AWS_DEFAULT_REGION=us-east-1
+    entrypoint: /bin/sh -c
+    command: >
+      "
+        aws sqs create-queue --endpoint-url http://localstack:4566 --queue-name logs_queue
+        aws sqs list-queues --endpoint-url http://localstack:4566
+      "
+    networks:
+      - modulith_app_network
+    depends_on:
+      - localstack
+
   db:
     container_name: db
     image: postgres
@@ -12,12 +48,13 @@ services:
       - ./db/02-data.sql:/docker-entrypoint-initdb.d/02-data.sql
     ports:
       - 5432:5432
+    networks:
+      - modulith_app_network
 
   consumer:
     container_name: consumer
     restart: unless-stopped
     build:
-      #context: ./
       dockerfile: ./Dockerfile
     env_file:
       - ./db/settings.env
@@ -26,16 +63,16 @@ services:
       SPRING_APPLICATION_NAME: consumer-app
       DB_HOST: db
       DB_PORT: 5432
-    ports:
-      - 8080:8080
+    networks:
+      - modulith_app_network
     depends_on:
       - db
+      - localstack
 
   producer:
     container_name: producer
     restart: unless-stopped
     build:
-      #context: ./
       dockerfile: ./Dockerfile
     env_file:
       - ./db/settings.env
@@ -44,10 +81,14 @@ services:
       SPRING_APPLICATION_NAME: producer-app
       DB_HOST: db
       DB_PORT: 5432
-    ports:
-      - 8080:8080
+    networks:
+      - modulith_app_network
     depends_on:
       - db
+      - localstack
+
+networks:
+  modulith_app_network:
 
 volumes:
   pg-data:

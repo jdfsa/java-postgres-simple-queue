@@ -1,4 +1,4 @@
-package com.jdfs.problem_solving.db_queue.consumer;
+package com.jdfs.problem_solving.db_queue.publisher;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -9,13 +9,17 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
 @Entity
 @Table(name = "queue")
-class ConsumerQueueItem {
+class PublisherQueueItem {
 
     @Id
     private Integer id;
 
     private String content;
+
+    @Override
+    public String toString() {
+        return String.format("%d | %s", id, content);
+    }
 }
