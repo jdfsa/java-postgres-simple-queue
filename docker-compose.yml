@@ -16,10 +16,10 @@ services:
       - SERVICES=sqs
     volumes:
       - ./volume:/var/lib/localstack
-    networks:
-      - modulith_app_network
+    healthcheck:
+      test: "exit 0"
 
-  setup-localstack-resources:
+  localstack-setup:
     image: mesosphere/aws-cli
     environment:
       - AWS_ACCESS_KEY_ID=dummyaccess
@@ -28,11 +28,10 @@ services:
     entrypoint: /bin/sh -c
     command: >
       "
-        aws sqs create-queue --endpoint-url http://localstack:4566 --queue-name logs_queue
-        aws sqs list-queues --endpoint-url http://localstack:4566
+        aws sqs create-queue --endpoint-url http://host.docker.internal:4566 --queue-name logs_queue
+        aws sqs list-queues --endpoint-url http://host.docker.internal:4566
+        exit 0
       "
-    networks:
-      - modulith_app_network
     depends_on:
       - localstack
 
@@ -48,8 +47,6 @@ services:
       - ./db/02-data.sql:/docker-entrypoint-initdb.d/02-data.sql
     ports:
       - 5432:5432
-    networks:
-      - modulith_app_network
 
   consumer:
     container_name: consumer
@@ -63,29 +60,41 @@ services:
       SPRING_APPLICATION_NAME: consumer-app
       DB_HOST: db
       DB_PORT: 5432
-    networks:
-      - modulith_app_network
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_CUSTOM_ENDPOINT: http://host.docker.internal:4566
+      AWS_SQS_QUEUE_HOST_AND_PORT: host.docker.internal:4566
     depends_on:
-      - db
-      - localstack
+      localstack:
+        condition: service_healthy
+      localstack-setup:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
 
-  publisher:
-    container_name: publisher
-    restart: unless-stopped
-    build:
-      dockerfile: ./Dockerfile
-    env_file:
-      - ./db/settings.env
-    environment:
-      SPRING_PROFILES_ACTIVE: publisher
-      SPRING_APPLICATION_NAME: publisher-app
-      DB_HOST: db
-      DB_PORT: 5432
-    networks:
-      - modulith_app_network
-    depends_on:
-      - db
-      - localstack
+  # publisher:
+  #   container_name: publisher
+  #   restart: unless-stopped
+  #   build:
+  #     dockerfile: ./Dockerfile
+  #   env_file:
+  #     - ./db/settings.env
+  #   environment:
+  #     SPRING_PROFILES_ACTIVE: publisher
+  #     SPRING_APPLICATION_NAME: publisher-app
+  #     DB_HOST: db
+  #     DB_PORT: 5432
+  #     AWS_ACCESS_KEY_ID: test
+  #     AWS_SECRET_ACCESS_KEY: test
+  #     AWS_CUSTOM_ENDPOINT: http://host.docker.internal:4566
+  #     AWS_SQS_QUEUE_HOST_AND_PORT: host.docker.internal:4566
+  # depends_on:
+  #     localstack:
+  #       condition: service_healthy
+  #     localstack-setup:
+  #       condition: service_completed_successfully
+  #     db:
+  #       condition: service_started
 
   producer:
     container_name: producer
@@ -95,18 +104,22 @@ services:
     env_file:
       - ./db/settings.env
     environment:
-      SPRING_PROFILES_ACTIVE: producer
+      #SPRING_PROFILES_ACTIVE: producer
+      SPRING_PROFILES_ACTIVE: producer-all
       SPRING_APPLICATION_NAME: producer-app
       DB_HOST: db
       DB_PORT: 5432
-    networks:
-      - modulith_app_network
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_CUSTOM_ENDPOINT: http://host.docker.internal:4566
+      AWS_SQS_QUEUE_HOST_AND_PORT: host.docker.internal:4566
     depends_on:
-      - db
-      - localstack
-
-networks:
-  modulith_app_network:
+      localstack:
+        condition: service_healthy
+      localstack-setup:
+        condition: service_completed_successfully
+      db:
+        condition: service_started
 
 volumes:
   pg-data:

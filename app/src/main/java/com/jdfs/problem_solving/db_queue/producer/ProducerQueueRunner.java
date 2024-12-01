@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Random;
 
-@Profile({"producer", "all"})
+@Profile({"producer", "producer-all", "all"})
 @Slf4j
 @Component
 @RequiredArgsConstructor
