@@ -49,7 +49,7 @@ services:
       - 5432:5432
 
   consumer:
-    container_name: consumer
+    #container_name: consumer
     restart: unless-stopped
     build:
       dockerfile: ./Dockerfile
@@ -71,9 +71,12 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_started
+    deploy:
+      mode: replicated
+      replicas: 2
 
   # publisher:
-  #   container_name: publisher
+  #   #container_name: publisher
   #   restart: unless-stopped
   #   build:
   #     dockerfile: ./Dockerfile
@@ -97,7 +100,7 @@ services:
   #       condition: service_started
 
   producer:
-    container_name: producer
+    #container_name: producer
     restart: unless-stopped
     build:
       dockerfile: ./Dockerfile
@@ -120,6 +123,9 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_started
+    deploy:
+      mode: replicated
+      replicas: 2
 
 volumes:
   pg-data:
