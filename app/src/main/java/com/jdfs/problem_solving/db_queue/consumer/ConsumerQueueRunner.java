@@ -27,7 +27,7 @@ public class ConsumerQueueRunner {
             final var result = sqsClient.receiveMessage(queueUrl);
             for (final Message msg : result.getMessages()) {
                 sqsClient.deleteMessage(queueUrl, msg.getReceiptHandle());
-                log.info("sqs received message: {}", msg.toString());
+                log.info("sqs msg id: {} - body: {}", msg.getMessageId(), msg.getBody());
             }
         }
         catch (RuntimeException e) {
