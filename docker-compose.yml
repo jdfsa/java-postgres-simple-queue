@@ -69,6 +69,24 @@ services:
       - db
       - localstack
 
+  publisher:
+    container_name: publisher
+    restart: unless-stopped
+    build:
+      dockerfile: ./Dockerfile
+    env_file:
+      - ./db/settings.env
+    environment:
+      SPRING_PROFILES_ACTIVE: publisher
+      SPRING_APPLICATION_NAME: publisher-app
+      DB_HOST: db
+      DB_PORT: 5432
+    networks:
+      - modulith_app_network
+    depends_on:
+      - db
+      - localstack
+
   producer:
     container_name: producer
     restart: unless-stopped
